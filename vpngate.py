@@ -245,7 +245,13 @@ def check_one(node, session):
             out["error"] = f"HTTP {r.status_code}"
             out["worker_error"] = True
             return out
-        j = r.json()
+                try:
+            j = r.json()
+        except Exception:
+            print(f"[DEBUG] {node['host']}:{node['port']} -> Worker 实际返回内容: {r.text[:500]}")
+            out["error"] = f"Worker 返回非 JSON: {r.text[:100]}"
+            out["worker_error"] = True
+            return out
         ok = bool(j.get("success"))
         out["success"] = ok
         out["status"] = "success" if ok else "failed"
