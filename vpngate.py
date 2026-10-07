@@ -227,8 +227,7 @@ def classify_network(host, exit_org, is_datacenter=None):
     return "unknown"
 
 def check_one(node, session):
-    """调用 Worker 检测单节点。返回节点+检测结果的合并 dict。
-    单节点失败 (网络错误/非 200/坏 JSON) 不会抛出, 统一记 success=False。"""
+    """调用 Worker 检测单节点。返回节点+检测结果的合并 dict。"""
     url = WORKER_CHECK_URL + quote(f"{node['host']}:{node['port']}", safe="")
     out = dict(node)
     out["protocol"] = "sstp"
@@ -245,11 +244,13 @@ def check_one(node, session):
             out["error"] = f"HTTP {r.status_code}"
             out["worker_error"] = True
             return out
-                try:
+        try:
             j = r.json()
         except Exception:
-            print(f"[DEBUG] {node['host']}:{node['port']} -> Worker 实际返回内容: {r.text[:500]}")
-            out["error"] = f"Worker 返回非 JSON: {r.text[:100]}"
+            j = None
+        if j is None:
+            print(f"[DEBUG] {node['host']}:{node['port']} -> Worker 返回非 JSON: {r.text[:300]}")
+            out["error"] = "Worker 返回非 JSON"
             out["worker_error"] = True
             return out
         ok = bool(j.get("success"))
